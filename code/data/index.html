@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CW Keyer 2.0</title>
+<meta name="viewport" content=
+"width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/w3.css">
+<style>
+      textarea {
+        width: 99%;
+        height: 250px;
+        padding: 15px 20px;
+        box-sizing: border-box;
+        border: 2px solid #ccc;
+        border-radius: 9px;
+        background-color: #f8f8f8;
+        font-size: 24px;
+        resize: none;
+      }
+</style>
+</head>
+<body>
+<script src="/js.cookie.min.js"></script>
+<script>
+      var newArray1;
+      var newArray2;
+      var first_letter;
+      var remaining_letters = " ";
+      var pause = 1;
+      var mycount = 0;
+      var typing_speed = 10; // default value of typing speed (slow)
+
+      // can set this value for changing clock speed
+      var master_clock = 100; // milliseconds in which each text is send
+
+      function update_main_log() {
+        console.log("key up done");
+        // Taking content value of TEXTAREA into main_log array
+        main_log = document.getElementById("txtcw").value;
+        console.log(main_log);
+      }
+
+      // starting timer with interval = refresh_time
+      let master_timer = setInterval(watchdog, master_clock);
+
+      function watchdog() {
+        mycount = mycount + 1;
+        // console.log(mycount);
+
+        // getting user set speed
+        if (mycount >= typing_speed) {
+          mytimer();
+          mycount = 0;
+        }
+      }
+
+      function mytimer() {
+        // Call a function repetatively with 1 Second interval
+
+        if (pause == 0) {
+          document.getElementById("status").innerHTML = "PAUSE CW";
+        }
+
+        if (pause == 1) {
+          document.getElementById("status").innerHTML = "CONTINUE >>";
+        }
+
+        if (document.getElementById("txtcw").value.length >= 1 && pause == 0) {
+          newArray1 = Array.from(document.getElementById("txtcw").value);
+          // finding first charactor of this array
+          first_letter = newArray1[0].toString();
+          // send this first character to ESP12
+          sendData(first_letter);
+          console.log("Sending  CW : " + first_letter);
+          // removing this first charactor from newArray1 also
+          newArray1.shift();
+          remaining_letters = newArray1.join("");
+          // Updating TEXTAREA with shifted text
+          document.getElementById("txtcw").value = remaining_letters;
+          // document.getElementById("txtcw").focus();
+          console.log(remaining_letters);
+          console.log("length is : " + remaining_letters.length);
+        }
+      } // timer closing
+
+
+      function pause_button() {
+        console.log("button pressed");
+
+        if (pause == 0) {
+          pause = 1;
+        } else {
+          pause = 0;
+        }
+      } // pause/continue button
+</script>
+<h3 id="sendreceipt">CW Keyer 2.0</h3>
+<form>
+<textarea id="txtcw" onkeyup="update_main_log()"></textarea></form>
+<button class="w3-btn w3-xlarge w3-white w3-border w3-round-large"
+id="status" onclick="pause_button()">PAUSE CW</button> &nbsp;
+&nbsp; &nbsp;<br><br>
+<div><button class="w3-btn w3-white w3-border w3-round-large" type=
+"button" onclick="edit_1()">Go &gt;&gt;</button> <input class=
+"w3-btn w3-white w3-border w3-round-large" type="text" id=
+"edit_txt_1"> &nbsp; <button class=
+"w3-btn w3-white w3-border w3-round-large" type="button" onclick=
+"edit_2()">Go &gt;&gt;</button> <input class=
+"w3-btn w3-white w3-border w3-round-large" type="text" id=
+"edit_txt_2"></div>
+<div><button class="w3-btn w3-white w3-border w3-round-large" type=
+"button" onclick="edit_3()">Go &gt;&gt;</button> <input class=
+"w3-btn w3-white w3-border w3-round-large" type="text" id=
+"edit_txt_3"> &nbsp; <button class=
+"w3-btn w3-white w3-border w3-round-large" type="button" onclick=
+"edit_4()">Go &gt;&gt;</button> <input class=
+"w3-btn w3-white w3-border w3-round-large" type="text" id=
+"edit_txt_4"></div>
+<div><button class="w3-btn w3-white w3-border w3-round-large" type=
+"button" onclick="edit_5()">Go &gt;&gt;</button> <input class=
+"w3-btn w3-white w3-border w3-round-large" type="text" id=
+"edit_txt_5"> &nbsp; <button class=
+"w3-btn w3-white w3-border w3-round-large" type="button" onclick=
+"edit_6()">Go &gt;&gt;</button> <input class=
+"w3-btn w3-white w3-border w3-round-large" type="text" id=
+"edit_txt_6"></div>
+<br>
+<fieldset class="w3-left-align"><br><br>
+<legend><b>[ Settings ]</b></legend> <input onchange=
+"change_tone()" oninput="show_sweeped_tone()" id="sidetone" type=
+"range" min="50" max="1500" value="500" class="slider"><br>
+<br>
+Change SIDE TONE frequecy: <b><i id="side_tone">???</i></b>
+Hertz<br>
+Saved Side Tone frequency : <b><i id="receipttone"></i></b> Hertz
+<br><br>
+<input onchange="change_wpm()" oninput="show_sweeped_wpm()" id=
+"speed" type="range" min="40" max="150" value="90" class=
+"slider"><br>
+<br>
+Change DIT time : <b><i id="ditime">???</i></b> Milli Second<br>
+Saved DIT time : <font color="blue"><b><i id=
+"receiptwpm"></i></b></font> Milli Second<br>
+<br>
+<label for="ca">Choose Typing Speed</label> <select name="ca" id=
+"ca" onchange="change_speed()">
+<option value="15">Very Slow</option>
+<option value="10">Slow</option>
+<option value="6">Medium</option>
+<option value="4">High</option>
+<option value="2">Very High</option>
+</select><br></fieldset>
+<script>
+      function show_sweeped_wpm() {
+        document.getElementById("ditime").innerHTML = document.getElementById("speed").value;
+      }
+
+      function show_sweeped_tone() {
+        document.getElementById("side_tone").innerHTML = document.getElementById("sidetone").value;
+      }
+
+      function change_wpm() {
+        document.getElementById("ditime").innerHTML = document.getElementById("speed").value;
+        // send milliseconds value
+        sendWpm(document.getElementById("speed").value);
+      }
+
+      function change_tone() {
+        document.getElementById("side_tone").innerHTML = document.getElementById("sidetone").value;
+        // send frequency value to backend (rirmware)
+        sendTone(document.getElementById("sidetone").value);
+      }
+
+      function change_speed() {
+        typing_speed = document.getElementById("ca").value; // setting new typing speed
+        sendSpeed(document.getElementById("ca").value); // sending new speed value to eeprom via ajax
+      }
+</script>
+<script>
+      function edit_1() {
+        document.getElementById("txtcw").value = document.getElementById("txtcw").value + " " + document.getElementById("edit_txt_1").value;
+      }
+      function edit_2() {
+        document.getElementById("txtcw").value = document.getElementById("txtcw").value + " " + document.getElementById("edit_txt_2").value;
+      }
+      function edit_3() {
+        document.getElementById("txtcw").value = document.getElementById("txtcw").value + " " + document.getElementById("edit_txt_3").value;
+      }
+      function edit_4() {
+        document.getElementById("txtcw").value = document.getElementById("txtcw").value + " " + document.getElementById("edit_txt_4").value;
+      }
+      function edit_5() {
+        document.getElementById("txtcw").value = document.getElementById("txtcw").value + " " + document.getElementById("edit_txt_5").value;
+      }
+      function edit_6() {
+        document.getElementById("txtcw").value = document.getElementById("txtcw").value + " " + document.getElementById("edit_txt_6").value;
+      }
+</script>
+<script>
+      function sendData(txt) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("sendreceipt").innerHTML = "CW ><font color=blue><b> " + this.responseText + "<\/b><\/font>";
+          }
+        };
+        xhttp.open("GET", "cwtxt?mytxt=" + txt, true);
+        xhttp.send();
+      }
+
+      function sendWpm(txt) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("receiptwpm").innerHTML = this.responseText;
+          }
+        };
+        Cookies.set('receiptwpm', txt);
+        xhttp.open("GET", "wpmtxt?mytxt=" + txt, true);
+        xhttp.send();
+      }
+
+      function sendTone(txt) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("receipttone").innerHTML = this.responseText;
+          }
+        };
+        Cookies.set('tone', txt);
+        xhttp.open("GET", "tonetxt?mytxt=" + txt, true);
+        xhttp.send();
+      }
+
+      function sendSpeed(txt) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            typing_speed = this.responseText;
+          }
+        };
+        Cookies.set('typing_speed', txt);
+        xhttp.open("GET", "speedtxt?mytxt=" + txt, true);
+        xhttp.send();
+      }
+</script>
+<script>
+      function getSavedWpm() {
+        var data = Cookies.get('receiptwpm');
+        if (data == undefined) {
+          Cookies.set('receiptwpm', 100);
+        }
+        document.getElementById("receiptwpm").innerHTML = data;
+        document.getElementById("ditime").innerHTML = data;
+      }
+      getSavedWpm();
+</script>
+<script>
+      function getSavedTone() {
+        var data = Cookies.get('tone');
+        if (data == undefined) {
+          Cookies.set('tone', 1050);
+        }
+        document.getElementById("receipttone").innerHTML = data;
+        document.getElementById("side_tone").innerHTML = data;
+        document.getElementById("sidetone").innerHTML = data;
+        console.log(data);
+      }
+      getSavedTone();
+</script>
+<script>
+      function getSavedtypespeed() {
+        var data = Cookies.get('typing_speed');
+        if (data == undefined) {
+          Cookies.set('typing_speed', "10");
+        }
+        document.getElementById("ca").value = Cookies.get('typing_speed');; // u[dating selected typing speed in selection list.innerHTML = Cookies.get('tone');
+      }
+      getSavedtypespeed();
+</script>
+
+<script>
+      async function send_settings_to_backend() {
+        await new Promise(r => setTimeout(r, 1000));
+        sendWpm(Cookies.get('receiptwpm'));
+        sendTone(Cookies.get('tone'));
+        sendSpeed(Cookies.get('typing_speed'))
+      }
+      send_settings_to_backend();
+</script>
+
+</body>
+</html>
